@@ -58,6 +58,17 @@ package hwpe_stream_package;
   } ctrl_addressgen_v3_t;
 
   typedef struct packed {
+    logic        [31:0] base_addr;
+    logic        [31:0] tot_len;
+  } ctrl_addressgen_v4_t;
+
+  typedef struct packed {
+    logic               enable;
+    logic        [31:0] len;
+    logic signed [32:0] stride; 
+  } stride_addressgen_v4_t;
+
+  typedef struct packed {
     logic enable;
     logic strb_valid;
     logic realign;
@@ -86,6 +97,10 @@ package hwpe_stream_package;
   typedef struct packed {
     logic done;
   } flags_addressgen_v3_t;
+
+  typedef struct packed {
+    logic done;
+  } flags_addressgen_v4_t;
 
   typedef struct packed {
     logic empty;
