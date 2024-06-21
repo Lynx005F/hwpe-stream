@@ -14,10 +14,10 @@
  */
 
 /**
- * The **hwpe_stream_parity_sink** module is used to monitor an input normal 
- * stream `normal_i` and compare it with a parity stream `parity_i` which only 
- * holds the handshake and one parity bit per strobe element. Together with 
- * hwpe_stream_parity_source this allows for low area fault detection on HWPE 
+ * The **hwpe_stream_parity_sink** module is used to monitor an input normal
+ * stream `normal_i` and compare it with a parity stream `parity_i` which only
+ * holds the handshake and one parity bit per strobe element. Together with
+ * hwpe_stream_parity_source this allows for low area fault detection on HWPE
  * Streams by building a parity network that matches the original network.
  */
 
@@ -27,11 +27,13 @@ module hwpe_stream_parity_sink #(
   parameter int unsigned DATA_WIDTH = 32,
   parameter int unsigned STRB_WIDTH = DATA_WIDTH/8
 ) (
-  hwpe_stream_intf_stream.monitor   normal_i,
-  hwpe_stream_intf_stream.sink      parity_i,
-  output logic fault_detected_o
+  input logic                     clk_i,
+  input logic                     rst_ni,
+  hwpe_stream_intf_stream.monitor normal_i,
+  hwpe_stream_intf_stream.sink    parity_i,
+  output logic                    fault_detected_o
 );
-  
+
   logic [STRB_WIDTH-1:0] local_parity_data;
 
   for (genvar i = 0; i < STRB_WIDTH; i++) begin
@@ -40,6 +42,15 @@ module hwpe_stream_parity_sink #(
 
   assign parity_i.ready = normal_i.ready;
 
-  assign fault_detected_o = (parity_i.valid != normal_i.valid || parity_i.strb != normal_i.strb || parity_i.data != local_parity_data);
+  logic fault_detected;
+  assign fault_detected = (parity_i.valid != normal_i.valid || parity_i.strb != normal_i.strb || parity_i.data != local_parity_data);
+
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      fault_detected_o <= '0;
+    end else begin
+      fault_detected_o <= fault_detected;
+    end
+  end
 
 endmodule // hwpe_stream_parity_sink
