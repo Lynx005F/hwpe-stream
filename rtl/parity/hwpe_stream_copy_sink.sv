@@ -14,22 +14,33 @@
  */
 
 /**
- * The **hwpe_stream_copy_sink** module is used to monitor an input normal 
- * stream `normal_i` and compare it with a copy stream `copy_i`. 
- * Together with hwpe_stream_copy_source this allows for low area fault detection 
+ * The **hwpe_stream_copy_sink** module is used to monitor an input normal
+ * stream `normal_i` and compare it with a copy stream `copy_i`.
+ * Together with hwpe_stream_copy_source this allows for low area fault detection
  * on HWPE streams by building a copy network that matches the original network.
  */
 
 import hwpe_stream_package::*;
 
 module hwpe_stream_copy_sink (
-  hwpe_stream_intf_stream.monitor   normal_i,
-  hwpe_stream_intf_stream.sink      copy_i,
-  output logic fault_detected_o
+  input logic                     clk_i,
+  input logic                     rst_ni,
+  hwpe_stream_intf_stream.monitor normal_i,
+  hwpe_stream_intf_stream.sink    copy_i,
+  output logic                    fault_detected_o
 );
-  
+
   assign copy_i.ready = normal_i.ready;
 
-  assign fault_detected_o = (copy_i.valid != normal_i.valid || copy_i.strb != normal_i.strb || copy_i.data != normal_i.data);
+  logic fault_detected;
+  assign fault_detected = (copy_i.valid != normal_i.valid || copy_i.strb != normal_i.strb || copy_i.data != normal_i.data);
+
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      fault_detected_o <= '0;
+    end else begin
+      fault_detected_o <= fault_detected;
+    end
+  end
 
 endmodule // hwpe_stream_copy_sink

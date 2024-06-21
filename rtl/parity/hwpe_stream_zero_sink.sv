@@ -14,23 +14,33 @@
  */
 
 /**
- * The **hwpe_stream_zero_sink** module is used to monitor an input normal 
- * stream `normal_i` and compare it with a zero stream `zero_i` but does not 
+ * The **hwpe_stream_zero_sink** module is used to monitor an input normal
+ * stream `normal_i` and compare it with a zero stream `zero_i` but does not
  * assign the data, so it can be optimised away.
- * Together with hwpe_stream_zero_source this allows for low area fault detection 
+ * Together with hwpe_stream_zero_source this allows for low area fault detection
  * on HWPE streams by building a zero network that matches the original network.
  */
 
 import hwpe_stream_package::*;
 
 module hwpe_stream_zero_sink (
-  hwpe_stream_intf_stream.monitor   normal_i,
-  hwpe_stream_intf_stream.sink      zero_i,
-  output logic fault_detected_o
+  input logic                     clk_i,
+  input logic                     rst_ni,
+  hwpe_stream_intf_stream.monitor normal_i,
+  hwpe_stream_intf_stream.sink    zero_i,
+  output logic                    fault_detected_o
 );
-  
+
   assign zero_i.ready = normal_i.ready;
 
-  assign fault_detected_o = (zero_i.valid != normal_i.valid || zero_i.strb != normal_i.strb);
+  logic fault_detected;
+  assign fault_detected = (zero_i.valid != normal_i.valid || zero_i.strb != normal_i.strb);
 
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      fault_detected_o <= '0;
+    end else begin
+      fault_detected_o <= fault_detected;
+    end
+  end
 endmodule // hwpe_stream_zero_sink
